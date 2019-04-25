@@ -4,23 +4,28 @@ COPY configs/.bash_profile /etc/skel/.bash_profile
 COPY configs/.bashrc /etc/skel/.bashrc
 RUN apt-get update  \
     && apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
-        openssh-server \ 
-        multitail \               
+        openssh-server \
+        multitail \
         sendmail \
     && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
     && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+    && export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" \
+    && echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
+    && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
     && apt-get update \
-    && apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \        
+    && apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
         nodejs \
         yarn \
-        jq \        
+        jq \
+        nano \
+        google-cloud-sdk \
     && /usr/bin/ssh-keygen -A  \
-    && chmod 600 /etc/skel/.bash* \    
+    && chmod 600 /etc/skel/.bash* \
     && cp /etc/skel/.bash_profile /home/tok/.bash_profile \
     && cp /etc/skel/.bashrc /home/tok/.bashrc \
     && chown tok:web /home/tok/.bash* \
-    && chmod 600 /home/tok/.bash* \        
+    && chmod 600 /home/tok/.bash* \
     && mkdir /run/sshd  \
     && curl -s https://getcomposer.org/installer > composer-setup.php && php composer-setup.php && mv composer.phar /usr/local/bin/composer && rm composer-setup.php  \
     && su - tok -c "/usr/local/bin/composer global require \"hirak/prestissimo\""  \
@@ -30,12 +35,12 @@ RUN apt-get update  \
     && wget -O /tmp/drush.phar https://github.com/drush-ops/drush-launcher/releases/download/0.6.0/drush.phar \
     && mv /tmp/drush.phar /usr/local/bin/drush \
     && chmod 755 /usr/local/bin/drush \
-    && chmod 750 /home/tok/.composer/vendor/drush/drush/drush \    
-    && curl -s http://download.redis.io/releases/redis-4.0.11.tar.gz > /tmp/redis-4.0.11.tar.gz \    
+    && chmod 750 /home/tok/.composer/vendor/drush/drush/drush \
+    && curl -s http://download.redis.io/releases/redis-4.0.11.tar.gz > /tmp/redis-4.0.11.tar.gz \
     && tar xzf /tmp/redis-4.0.11.tar.gz -C /tmp/ \
     && cd /tmp/redis-4.0.11 \
     && make && make install \
-    && rm -rf /tmp/*  
+    && rm -rf /tmp/*
 
 COPY configs/sshd_config /etc/ssh/sshd_config
 COPY configs/motd.sh /etc/motd.sh
